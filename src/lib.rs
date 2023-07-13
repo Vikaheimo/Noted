@@ -1,11 +1,18 @@
 use rusqlite::{named_params, Connection};
 use std::path::Path;
 
+#[derive(Debug)]
 pub struct Database {
     db: Connection,
 }
 
-const DATABASE_PATH: &'static str = "db.db";
+const DATABASE_PATH: &str = "db.db";
+
+impl Default for Database {
+    fn default() -> Self {
+        Database::new_in_memory()
+    }
+}
 
 impl Database {
     pub fn new() -> Self {
@@ -34,20 +41,23 @@ impl Database {
                 id          INTEGER PRIMARY KEY,
                 name        TEXT NOT NULL,
                 text        TEXT,
-                completed   INTEGER NOT NULL,
+                completed   INTEGER NOT NULL
             )",
                 (),
             )
             .unwrap();
     }
 
-    pub fn add_note(&self, name: String, text: String) {
+    pub fn add_note(&self, name: &str, text: &str) {
         self.db
-            .execute("INSERT INTO notes (name, text, completed)", (name, text, 0))
+            .execute(
+                "INSERT INTO notes (name, text, completed) VALUES (?1, ?2, ?3)",
+                (name, text, 0),
+            )
             .unwrap();
     }
 
-    pub fn search_notes(&self, name: String) -> Vec<Note> {
+    pub fn search_notes(&self, name: &str) -> Vec<Note> {
         let mut statement = self
             .db
             .prepare("SELECT * FROM notes WHERE name Like :name")
@@ -67,14 +77,23 @@ impl Database {
             .collect::<Result<Vec<_>, _>>()
             .unwrap()
     }
+
+    pub fn remove_note_by_id(&self, id: i32) {
+        self.db
+            .execute(
+                "DELETE FROM notes WHERE id = :id",
+                named_params! {":id": id},
+            )
+            .unwrap();
+    }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct Note {
-    id: i32,
-    name: String,
-    text: String,
-    completed: bool,
+    pub id: i32,
+    pub name: String,
+    pub text: String,
+    pub completed: bool,
 }
 
 impl Note {
@@ -85,5 +104,70 @@ impl Note {
             text: row.get(2)?,
             completed: row.get(3)?,
         })
+    }
+}
+
+impl Ord for Note {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        (self.completed, self.id, &self.name, &self.text).cmp(&(
+            other.completed,
+            other.id,
+            &other.name,
+            &other.text,
+        ))
+    }
+}
+
+impl PartialOrd for Note {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        match self.completed.partial_cmp(&other.completed) {
+            Some(core::cmp::Ordering::Equal) => {}
+            ord => return ord,
+        }
+        match self.id.partial_cmp(&other.id) {
+            Some(core::cmp::Ordering::Equal) => {}
+            ord => return ord,
+        }
+        match self.name.partial_cmp(&other.name) {
+            Some(core::cmp::Ordering::Equal) => {}
+            ord => return ord,
+        }
+
+        self.text.partial_cmp(&other.text)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::Note;
+
+    fn create_note(id: i32, name: &str, text: &str, completed: bool) -> Note {
+        Note {
+            id,
+            name: name.to_owned(),
+            text: text.to_owned(),
+            completed,
+        }
+    }
+
+    #[test]
+    fn notes_sorting() {
+        let mut notes = vec![
+            create_note(1, "test", "test", true),
+            create_note(2, "test", "test", false),
+            create_note(3, "test", "test", true),
+            create_note(4, "test", "test", false),
+        ];
+
+        let model = vec![
+            create_note(2, "test", "test", false),
+            create_note(4, "test", "test", false),
+            create_note(1, "test", "test", true),
+            create_note(3, "test", "test", true),
+        ];
+
+        notes.sort_unstable();
+
+        assert_eq!(notes, model)
     }
 }
