@@ -51,8 +51,8 @@ impl Database {
     pub fn add_note(&self, name: &str, text: &str) {
         self.db
             .execute(
-                "INSERT INTO notes (name, text, completed) VALUES (?1, ?2, ?3)",
-                (name, text, 0),
+                "INSERT INTO notes (name, text, completed) VALUES (?1, ?2, FALSE)",
+                (name, text),
             )
             .unwrap();
     }
@@ -78,11 +78,38 @@ impl Database {
             .unwrap()
     }
 
-    pub fn remove_note_by_id(&self, id: i32) {
+    pub fn remove_note(&self, id: i32) {
         self.db
             .execute(
                 "DELETE FROM notes WHERE id = :id",
                 named_params! {":id": id},
+            )
+            .unwrap();
+    }
+
+    pub fn complete_a_note(&self, id: i32) {
+        self.db
+            .execute(
+                "UPDATE notes SET completed = TRUE WHERE id = :id",
+                named_params! {":id": id},
+            )
+            .unwrap();
+    }
+
+    pub fn rename_note(&self, id: i32, new_name: &str) {
+        self.db
+            .execute(
+                "UPDATE notes SET name = :name WHERE id = :id",
+                named_params! {":name": new_name, ":id": id},
+            )
+            .unwrap();
+    }
+
+    pub fn change_note_text(&self, id: i32, new_text: &str) {
+        self.db
+            .execute(
+                "UPDATE notes SET text = :text WHERE id = :id",
+                named_params! {":text": new_text, ":id": id},
             )
             .unwrap();
     }
