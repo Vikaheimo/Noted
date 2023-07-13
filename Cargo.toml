@@ -7,3 +7,4 @@ authors = ["Vili Ikäheimo <vili.vikaheim@gmail.com>"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+rusqlite = "0.29.0"
