@@ -9,3 +9,4 @@ authors = ["Vili Ikäheimo <vili.vikaheim@gmail.com>"]
 [dependencies]
 derive_more = "0.99.17"
 rusqlite = "0.29.0"
+text_io = "0.1.12"
