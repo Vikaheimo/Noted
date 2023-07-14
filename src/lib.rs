@@ -16,12 +16,13 @@ impl Default for Database {
 
 impl Database {
     pub fn new() -> Self {
+        let first_time = !Path::new(DATABASE_PATH).exists();
         let db = Database {
             db: Connection::open("db.db").unwrap(),
         };
 
-        if !Path::new(DATABASE_PATH).exists() {
-            db.create_tables()
+        if first_time {
+            db.create_tables();
         }
         db
     }
