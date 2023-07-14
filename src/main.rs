@@ -21,6 +21,7 @@ fn handle_command(command: Vec<String>, db: &Database) -> Result<(), NoteError> 
         "help" | "h" => help(),
         "add" | "a" => add(db, &command)?,
         "complete" | "c" => call_with_id(db, Database::complete_a_note, &command)?,
+        "uncomplete" | "u" => call_with_id(db, Database::uncomplete_a_note, &command)?,
         "delete" | "d" => call_with_id(db, Database::remove_note, &command)?,
         "rename" | "r" => call_with_id_and_string_arg(db, Database::rename_note, &command)?,
         "text" | "t" => call_with_id_and_string_arg(db, Database::change_note_text, &command)?,
@@ -92,7 +93,7 @@ fn call_with_id(
     let id_string = command.get(1).ok_or(NoteError::MissingField {
         field: "id".to_owned(),
     })?;
-    let id = parse_id(&id_string)?;
+    let id = parse_id(id_string)?;
     function(db, id);
     Ok(())
 }
@@ -105,7 +106,7 @@ fn call_with_id_and_string_arg(
     let id_string = command.get(1).ok_or(NoteError::MissingField {
         field: "id".to_owned(),
     })?;
-    let id = parse_id(&id_string)?;
+    let id = parse_id(id_string)?;
 
     let str_arg = command.get(2).ok_or(NoteError::MissingField {
         field: "text".to_owned(),

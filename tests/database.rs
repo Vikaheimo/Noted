@@ -90,3 +90,18 @@ fn changing_note_text() {
         first_note
     )
 }
+
+#[test]
+fn compelting_and_uncomleting_a_note() {
+    let db = Database::default();
+
+    db.add_note("test", "testing functionality");
+    db.complete_a_note(1);
+    db.uncomplete_a_note(1);
+
+    let first_note = &db.get_all_notes()[0];
+    assert_eq!(
+        &create_note(1, "test", "testing functionality", false),
+        first_note
+    )
+}

@@ -114,6 +114,15 @@ impl Database {
             )
             .unwrap();
     }
+
+    pub fn uncomplete_a_note(&self, id: i32) {
+        self.db
+            .execute(
+                "UPDATE notes SET completed = FALSE WHERE id = :id",
+                named_params! {":id": id},
+            )
+            .unwrap();
+    }
 }
 
 #[derive(Debug, PartialEq, Eq)]
