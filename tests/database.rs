@@ -40,7 +40,7 @@ fn adding_one_is_stored_correctly() {
 }
 
 #[test]
-fn completing_a_task() {
+fn completing_a_note() {
     let db = Database::default();
 
     db.add_note("test", "testing functionality");
@@ -55,7 +55,7 @@ fn completing_a_task() {
 
 #[test]
 #[ignore = "Not implemented"]
-fn completing_a_completed_task_returns_error() {
+fn completing_a_completed_note_returns_error() {
     let db = Database::default();
 
     db.add_note("test", "testing functionality");
@@ -64,7 +64,7 @@ fn completing_a_completed_task_returns_error() {
 }
 
 #[test]
-fn renaming_a_task() {
+fn renaming_a_note() {
     let db = Database::default();
 
     db.add_note("test", "testing functionality");
@@ -92,7 +92,7 @@ fn changing_note_text() {
 }
 
 #[test]
-fn compelting_and_uncomleting_a_note() {
+fn completing_and_uncompleting_a_note() {
     let db = Database::default();
 
     db.add_note("test", "testing functionality");

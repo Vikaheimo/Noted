@@ -148,8 +148,8 @@ fn help() {
     help, h         shows this help
     add, a          add a new note, example: noted add test \"This is a test note!\"
     list, l         lists all notes,
-    complete, c     completes a given taks,
-    delete, d       deletes a given task,
+    complete, c     completes a given note,
+    delete, d       deletes a given note,
     rename, r       rename a given note, example: noted rename 1 \"new name\"
     text, t         change note text, example: noted text 1 \"new text\"
     "
