@@ -20,6 +20,10 @@ fn handle_command(command: Vec<String>, db: &Database) -> Result<(), NoteError> 
         "list" | "l" => list_all(db),
         "help" | "h" => help(),
         "add" | "a" => add(db, &command)?,
+        "complete" | "c" => call_with_id(db, Database::complete_a_note, &command)?,
+        "delete" | "d" => call_with_id(db, Database::remove_note, &command)?,
+        "rename" | "r" => call_with_id_and_string_arg(db, Database::rename_note, &command)?,
+        "text" | "t" => call_with_id_and_string_arg(db, Database::change_note_text, &command)?,
         _ => usage(),
     };
     Ok(())
@@ -29,7 +33,7 @@ fn interactive(db: &Database) {
     println!("Running in interactive mode, enter empty to exit!");
     loop {
         print!("> ");
-        let line: String = text_io::read!("{}\n");;
+        let line: String = text_io::read!("{}\n");
         let parsed = parse_string(line);
         if parsed.is_empty() {
             return;
@@ -39,6 +43,10 @@ fn interactive(db: &Database) {
             println!("Error: {}", err);
         }
     }
+}
+
+fn parse_id(s: &str) -> Result<i32, NoteError> {
+    s.parse::<i32>().map_err(|_| NoteError::NotAValidID)
 }
 
 fn parse_string(s: String) -> Vec<String> {
@@ -71,6 +79,36 @@ fn parse_string(s: String) -> Vec<String> {
 
 fn usage() {
     println!("Usage: noted [command]. To display help, use noted help.")
+}
+
+fn call_with_id(
+    db: &Database,
+    function: fn(&Database, i32),
+    command: &[String],
+) -> Result<(), NoteError> {
+    let id_string = command.get(1).ok_or(NoteError::MissingField {
+        field: "id".to_owned(),
+    })?;
+    let id = parse_id(&id_string)?;
+    function(db, id);
+    Ok(())
+}
+
+fn call_with_id_and_string_arg(
+    db: &Database,
+    function: fn(&Database, i32, &str),
+    command: &[String],
+)-> Result<(), NoteError>  {
+    let id_string = command.get(1).ok_or(NoteError::MissingField {
+        field: "id".to_owned(),
+    })?;
+    let id = parse_id(&id_string)?;
+
+    let str_arg = command.get(2).ok_or(NoteError::MissingField {
+        field: "text".to_owned(),
+    })?;
+    function(db, id, str_arg);
+    Ok(())
 }
 
 fn add(db: &Database, command: &[String]) -> Result<(), NoteError> {
@@ -108,7 +146,8 @@ fn help() {
     list, l         lists all notes,
     complete, c     completes a given taks,
     delete, d       deletes a given task,
-    update, u       update a given task with a new name or text
+    rename, r       rename a given note, example: noted rename 1 \"new name\"
+    text, t         change note text, example: noted text 1 \"new text\"
     "
     )
 }
@@ -117,6 +156,8 @@ fn help() {
 enum NoteError {
     #[display(fmt = "Missing field: {}", field)]
     MissingField { field: String },
+    #[display(fmt = "The given ID isn't valid!")]
+    NotAValidID,
 }
 
 #[cfg(test)]
@@ -155,6 +196,14 @@ mod test {
         let parse = String::from("'please parse ' ' this sentence'");
         let parsed = parse_string(parse);
         let model = create_string_vector(vec!["please parse ", " this sentence"]);
+        assert_eq!(parsed, model)
+    }
+
+    #[test]
+    fn many_whitespace() {
+        let parse = String::from("     ");
+        let parsed = parse_string(parse);
+        let model = create_string_vector(vec![]);
         assert_eq!(parsed, model)
     }
 }
