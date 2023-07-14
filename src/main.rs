@@ -57,6 +57,9 @@ fn parse_string(s: String) -> Vec<String> {
         match (c, between_quotes) {
             ('\'', true) | ('\"', true) => {
                 between_quotes = false;
+                if string_buffer.is_empty() {
+                    continue;
+                }
                 formatted.push(string_buffer);
                 string_buffer = String::new();
             }
@@ -98,7 +101,7 @@ fn call_with_id_and_string_arg(
     db: &Database,
     function: fn(&Database, i32, &str),
     command: &[String],
-)-> Result<(), NoteError>  {
+) -> Result<(), NoteError> {
     let id_string = command.get(1).ok_or(NoteError::MissingField {
         field: "id".to_owned(),
     })?;
@@ -202,6 +205,14 @@ mod test {
     #[test]
     fn many_whitespace() {
         let parse = String::from("     ");
+        let parsed = parse_string(parse);
+        let model = create_string_vector(vec![]);
+        assert_eq!(parsed, model)
+    }
+
+    #[test]
+    fn many_quotations() {
+        let parse = String::from("''''''");
         let parsed = parse_string(parse);
         let model = create_string_vector(vec![]);
         assert_eq!(parsed, model)
