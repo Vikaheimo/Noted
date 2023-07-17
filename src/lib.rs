@@ -1,3 +1,6 @@
+#[cfg(feature = "deb")]
+use dirs::home_dir;
+use lazy_static::lazy_static;
 use rusqlite::{named_params, Connection};
 use std::path::Path;
 
@@ -6,7 +9,33 @@ pub struct Database {
     db: Connection,
 }
 
-const DATABASE_PATH: &str = "db.db";
+#[cfg(not(feature = "deb"))]
+lazy_static! {
+    static ref DATABASE_FILE: String = String::from("db.db");
+}
+
+#[cfg(feature = "deb")]
+lazy_static! {
+    static ref DATABASE_FOLDER: String = handle_database_dir().to_str().unwrap().to_owned();
+}
+#[cfg(feature = "deb")]
+lazy_static! {
+    static ref DATABASE_FILE: String = handle_database_file();
+}
+
+#[cfg(feature = "deb")]
+fn handle_database_dir() -> std::path::PathBuf {
+    let mut dir = home_dir().unwrap();
+    dir.push(".noted");
+    dir
+}
+
+#[cfg(feature = "deb")]
+fn handle_database_file() -> String {
+    let mut file = handle_database_dir();
+    file.push("db.db");
+    file.to_str().unwrap().to_owned()
+}
 
 impl Default for Database {
     fn default() -> Self {
@@ -16,9 +45,16 @@ impl Default for Database {
 
 impl Database {
     pub fn new() -> Self {
-        let first_time = !Path::new(DATABASE_PATH).exists();
+        let first_time = !Path::new(&*DATABASE_FILE).exists();
+
+        #[cfg(feature = "deb")]
+        if first_time {
+            let err = std::fs::create_dir_all(&*DATABASE_FOLDER);
+            println!("{:?}", err);
+        }
+
         let db = Database {
-            db: Connection::open("db.db").unwrap(),
+            db: Connection::open(&*DATABASE_FILE).unwrap(),
         };
 
         if first_time {
